@@ -6,7 +6,7 @@ use chrono::prelude::*;
 #[derive(Debug,Clone,Serialize)]
 pub struct Block{
     pub index:usize,
-    pub timestamp:u32,
+    pub timestamp:i64,
     pub nonce:u32,
     pub amonut: u32,
     pub previous_hash:String,
@@ -17,24 +17,24 @@ pub struct Blockchain{
 }
 
 impl Blockchain {
-    pub fn new()->Self{
+    pub fn genesis()->Self{
         let block = Block{
-            index:1,
-            timestamp: Utc::now().timestamp_millis() as u32,
+            index: 1,
+            timestamp: Utc::now().timestamp_millis(),
             nonce: 1,
             amonut: 0, 
-            previous_hash: "0".to_string(),
+            previous_hash: String::from_utf8(vec![48;64]).unwrap(),
         };
-        let chains:Vec<Block> = vec![block];
-        Blockchain { chain: chains }
+        let chains = vec![block];
+        Blockchain { chain: chains}
     }
     pub fn create_block(&mut self,nonce:u32,previous_hash:String,amount:u32){
         let block = Block { index: self.chain.len()+1 ,
-             timestamp: Utc::now().timestamp_millis() as u32,
-             nonce: nonce,
-             amonut: amount, 
-             previous_hash: previous_hash
-             };
+                            timestamp: Utc::now().timestamp_millis(),
+                            nonce: nonce,
+                            amonut: amount, 
+                            previous_hash: previous_hash
+                          };
         self.chain.push(block);           
     }
     pub fn get_previous_block(&self)->&Block{
@@ -56,10 +56,10 @@ impl Blockchain {
         }
         s
     }
-    pub fn proof_of_work(&self,difficulty:usize, previous_nonce:u32)->u32{
+    pub fn proof_of_work(&self,difficulty:usize)->u32{
         let mut new_nonce:u32 = 1;
         loop{
-            let hash = self.hash( new_nonce.pow(2) + previous_nonce.pow(2));
+            let hash = self.hash(new_nonce);
             let slice = &hash[..difficulty];
             match slice.parse::<u32>(){
                 Ok(val) => {
@@ -86,9 +86,9 @@ impl Blockchain {
                 return false;
             }
 
-            let previous_nonce = previous_block.nonce;
+           // let previous_nonce = previous_block.nonce;
             let nonce = block.nonce;
-            let hash = self.hash(nonce.pow(2) + previous_nonce.pow(2));
+            let hash = self.hash(nonce);
             let slice = &hash[..difficulty];
             match slice.parse::<u32>(){
                 Ok(val) => {
